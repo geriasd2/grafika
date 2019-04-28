@@ -17,17 +17,19 @@
 	<inttypes.h>
 	<stdint.h>
 
-1554647119 source:d:\grafika\default_project\main.cpp
+1556394836 source:d:\grafika\default_project\main.cpp
 	<glad/glad.h>
 	<GLFW/glfw3.h>
+	<stdlib.h>
+	"stb_image.h"
+	"shader.h"
+	"Camera.h"
+	"line.h"
 	<glm/glm.hpp>
 	<glm/gtc/matrix_transform.hpp>
 	<glm/gtc/type_ptr.hpp>
-	"shader.h"
 	<vector>
 	<iostream>
-	<cmath>
-	<math.h>
 
 1471528360 d:\grafika\default_project\include\glfw\glfw3.h
 	<stddef.h>
@@ -981,4 +983,38 @@
 	<glm/glm.hpp>
 	<glm/gtc/matrix_transform.hpp>
 	<glm/gtc/type_ptr.hpp>
+
+1556191571 d:\grafika\default_project\stb_image.h
+	"stb_image.h"
+	<stdio.h>
+	<stdarg.h>
+	<stddef.h>
+	<stdlib.h>
+	<string.h>
+	<limits.h>
+	<math.h>
+	<stdio.h>
+	<assert.h>
+	<stdint.h>
+	<emmintrin.h>
+	<intrin.h>
+	<arm_neon.h>
+
+1556233782 d:\grafika\default_project\camera.h
+	<glad/glad.h>
+	<glm/glm.hpp>
+	<glm/gtc/matrix_transform.hpp>
+	<vector>
+
+1556301461 d:\grafika\default_project\plane.h
+	<glm/glm.hpp>
+
+1556382654 d:\grafika\default_project\line.h
+	<vector>
+	<glm/glm.hpp>
+	<glm/gtc/matrix_transform.hpp>
+	<glm/gtc/type_ptr.hpp>
+
+1556381405 source:d:\grafika\default_project\stb_image.cpp
+	"stb_image.h"
 

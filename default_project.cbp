@@ -42,9 +42,13 @@
 		<Unit filename="glad.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="line.h" />
 		<Unit filename="main.cpp" />
 		<Unit filename="main_gyakorlat.cpp" />
+		<Unit filename="plane.h" />
 		<Unit filename="shader.h" />
+		<Unit filename="stb_image.cpp" />
+		<Unit filename="stb_image.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

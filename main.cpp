@@ -1,383 +1,50 @@
-
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <stdlib.h>
+
+#include "stb_image.h"
+#include "shader.h"
+#include "Camera.h"
+#include "line.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "shader.h"
 #include <vector>
-
 #include <iostream>
-#include <cmath>
-#include <math.h>
-
-#define approx 500
-#define PI 3.14159265
-
-
-class Point{
-
-public:
-
-    float x;
-    float y;
-    bool ctrlpoint;
-
-    Point(float x, float y){
-        this->x = x;
-        this->y = y;
-        ctrlpoint = false;
-    }
-
-    Point operator*(double L){
-        Point p(this->x, this->y);
-        p.x *= L;
-        p.y *= L;
-        return p;
-    }
-
-    Point operator+(Point p){
-        Point p2(this->x + p.x, this->y + p.y);
-        return p2;
-    }
-
-    Point operator/(double n){
-        Point p2(this->x / n, this->y / n);
-        return p2;
-    }
-
-    float distance(Point p){
-        float xDist = this->x - p.x;
-        float yDist = this->y - p.y;
-        return xDist * xDist + yDist * yDist;
-    }
-};
-
-class Snail{
-
-public:
-    glm::mat4 trans = glm::mat4(1.0f);
-    double lastFrame = 0;
-    double actFrame = 0;
-    unsigned int actPtIdx = 0;
-    float numOfVertices = 72;
-    float direction = 0;
-    float speed = 0.0;
-    glm::vec2 position = glm::vec2(0.0, 0.0);
-    float vertices[432] = {
-        0.0, 0.0, 0.0, 0.6, 0.4, 0.2,
-        -0.065, -0.54, 0.0, 0.6, 0.4, 0.2,
-        -0.095119, -0.497507, 0.0, 0.6, 0.4, 0.2,
-        -0.124625, -0.4541, 0.0, 0.6, 0.4, 0.2,
-        -0.152904, -0.408866, 0.0, 0.6, 0.4, 0.2,
-        -0.179292, -0.361235, 0.0, 0.6, 0.4, 0.2,
-        -0.203127, -0.310632, 0.0, 0.6, 0.4, 0.2,
-        -0.22374, -0.257064, 0.0, 0.6, 0.4, 0.2,
-        -0.240462, -0.200533, 0.0, 0.6, 0.4, 0.2,
-        -0.252804, -0.141643, 0.0, 0.6, 0.4, 0.2,
-        -0.260274, -0.0809978, 0.0, 0.6, 0.4, 0.2,
-        -0.262821, -0.0195675, 0.0, 0.6, 0.4, 0.2,
-        -0.260392, 0.0416779, 0.0, 0.6, 0.4, 0.2,
-        -0.253572, 0.10181, 0.0, 0.6, 0.4, 0.2,
-        -0.242945, 0.159902, 0.0, 0.6, 0.4, 0.2,
-        -0.229685, 0.215444, 0.0, 0.6, 0.4, 0.2,
-        -0.214968, 0.267927, 0.0, 0.6, 0.4, 0.2,
-        -0.200194, 0.317402, 0.0, 0.6, 0.4, 0.2,
-        -0.186763, 0.363918, 0.0, 0.6, 0.4, 0.2,
-        -0.175713, 0.407924, 0.0, 0.6, 0.4, 0.2,
-        -0.168087, 0.449864, 0.0, 0.6, 0.4, 0.2,
-        -0.16406, 0.49022, 0.0, 0.6, 0.4, 0.2,
-        -0.163811, 0.529469, 0.0, 0.6, 0.4, 0.2,
-        -0.166541, 0.567704, 0.0, 0.6, 0.4, 0.2,
-        -0.171454, 0.605018, 0.0, 0.6, 0.4, 0.2,
-        -0.177169, 0.640794, 0.0, 0.6, 0.4, 0.2,
-        -0.182305, 0.674412, 0.0,0.6, 0.4, 0.2,
-        -0.185609, 0.704512, 0.0, 0.6, 0.4, 0.2,
-        -0.185825, 0.729732, 0.0, 0.6, 0.4, 0.2,
-        -0.182434, 0.748419, 0.0, 0.6, 0.4, 0.2,
-        -0.174915, 0.758921, 0.0, 0.6, 0.4, 0.2,
-        -0.163601, 0.760198, 0.0, 0.6, 0.4, 0.2,
-        -0.148825, 0.751213, 0.0, 0.6, 0.4, 0.2,
-        -0.131356, 0.732489, 0.0, 0.6, 0.4, 0.2,
-        -0.111965, 0.704546, 0.0, 0.6, 0.4, 0.2,
-        -0.0913056, 0.669823, 0.0, 0.6, 0.4, 0.2,
-        -0.0700317, 0.630758, 0.0, 0.6, 0.4, 0.2,
-        -0.0484571, 0.591022, 0.0, 0.6, 0.4, 0.2,
-        -0.0268953, 0.55429, 0.0, 0.6, 0.4, 0.2,
-        -0.00546516, 0.523902, 0.0, 0.6, 0.4, 0.2,
-        0.0157144, 0.503198, 0.0, 0.6, 0.4, 0.2,
-        0.0365588, 0.493559, 0.0, 0.6, 0.4, 0.2,
-        0.0569832, 0.496366, 0.0, 0.6, 0.4, 0.2,
-        0.0769529, 0.510359, 0.0, 0.6, 0.4, 0.2,
-        0.0964333, 0.534279, 0.0, 0.6, 0.4, 0.2,
-        0.115517, 0.564945, 0.0, 0.6, 0.4, 0.2,
-        0.134297, 0.599175, 0.0, 0.6, 0.4, 0.2,
-        0.153001, 0.633382, 0.0, 0.6, 0.4, 0.2,
-        0.171855, 0.663978, 0.0,0.6, 0.4, 0.2,
-        0.190887, 0.687945, 0.0, 0.6, 0.4, 0.2,
-        0.210124, 0.702268, 0.0, 0.6, 0.4, 0.2,
-        0.228655, 0.70482, 0.0, 0.6, 0.4, 0.2,
-        0.245566, 0.693476, 0.0, 0.6, 0.4, 0.2,
-        0.25885, 0.668485, 0.0, 0.6, 0.4, 0.2,
-        0.266502, 0.630093, 0.0,0.6, 0.4, 0.2,
-        0.267285, 0.581822, 0.0, 0.6, 0.4, 0.2,
-        0.25996, 0.527192, 0.0, 0.6, 0.4, 0.2,
-        0.247576, 0.469, 0.0, 0.6, 0.4, 0.2,
-        0.233179, 0.410041, 0.0, 0.6, 0.4, 0.2,
-        0.222704, 0.348805, 0.0, 0.6, 0.4, 0.2,
-        0.222086, 0.28378, 0.0, 0.6, 0.4, 0.2,
-        0.228515, 0.212583, 0.0, 0.6, 0.4, 0.2,
-        0.239181, 0.132831, 0.0, 0.6, 0.4, 0.2,
-        0.244235, 0.0422385, 0.0, 0.6, 0.4, 0.2,
-        0.233827, -0.0614775, 0.0, 0.6, 0.4, 0.2,
-        0.208734, -0.168485, 0.0,0.6, 0.4, 0.2,
-        0.169733, -0.26895, 0.0, 0.6, 0.4, 0.2,
-        0.120107, -0.357745, 0.0, 0.6, 0.4, 0.2,
-        0.0631389, -0.429739, 0.0,0.6, 0.4, 0.2,
-        0.00890972, -0.482851, 0.0,0.6, 0.4, 0.2,
-        -0.0325, -0.515, 0.0, 0.6, 0.4, 0.2,
-        -0.0675, -0.536667, 0.0, 0.6, 0.4, 0.2
-    };
-
-
-
-    Snail(){}
-
-    void loadToGpu(unsigned int &VAO, unsigned int &VBO){
-        glBindVertexArray(VAO);
-        glBindBuffer(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(this->vertices), this->vertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-        glEnableVertexAttribArray(1);
-        glBindVertexArray(0);
-    }
-
-    void draw(unsigned int &VAO, unsigned int &VBO, Shader &shader, std::vector<Point> &points){
-
-        this->calcTransform(points);
-        this->trans = glm::scale(this->trans, glm::vec3(0.1, 0.1, 0.1));
-        shader.setMat4("trans", this->trans);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLE_FAN, 0, this->numOfVertices);
-        glBindVertexArray(0);
-    }
-
-    void setEllapsedTime(){
-        this->lastFrame = this->actFrame;
-        this->actFrame = glfwGetTime();
-    }
-
-    void calcTransform(std::vector<Point> &points){
-        if(points.size() < 5){
-            this->trans = glm::mat4(1.0f);
-            if(points.size()){
-                this->trans = glm::translate(this->trans, glm::vec3(points[0].x, points[0].y, 0.0));
-                //this->trans = glm::rotate(this->trans, -glm::radians(36.0f), glm::vec3(0.0, 0.0, 1.0));
-            }
-            return;
-        }
-
-        this->setEllapsedTime();
-        Point nextPt = this->setNextPt(points);
-        if(this->checkDistance(nextPt)){
-            //we can just shift position with the normalized direction vector * ellapsed time
-            this->setDisplacementRotation(nextPt, this->actFrame - this->lastFrame);
-            return;
-        }
-        this->actPtIdx++;
-        this->calcTransform(points);
-    }
-
-    Point setNextPt(std::vector<Point> &points){
-        if(this->actPtIdx == points.size() - 1){
-            this->actPtIdx = 0;
-        }
-        return points[this->actPtIdx + 1];
-    }
-
-    bool checkDistance(Point p){
-        double ellapsedTime = this->actFrame - this->lastFrame;
-        double length = glm::length(glm::vec2(this->position[0] - p.x, this->position[1] - p.y));
-        return ellapsedTime < length;
-    }
-
-    void setDisplacementRotation(Point nextPt, double distance){
-        glm::vec2 directionVec = glm::normalize(glm::vec2(nextPt.x - this->position[0], nextPt.y - this->position[1]));
-        this->setSpeed(directionVec);
-        float xDisplacement = directionVec[0] * distance * this->speed;
-        float yDisplacement = directionVec[1] * distance * this->speed;
-        this->position = glm::vec2(this->position[0] + xDisplacement, this->position[1] + yDisplacement);
-        this->trans = glm::translate(glm::mat4(1.0f), glm::vec3(this->position, 0.0));
-        //std::cout << "y / x = " << directionVec[1] / directionVec[0] << " -> atan = " << glm::atan(directionVec[1] / directionVec[0]) << "\n";
-        this->trans = glm::rotate(this->trans, countAngle(directionVec[0], directionVec[1], xDisplacement), glm::vec3(0.0, 0.0, 1.0));
-    }
-
-    void setSpeed(glm::vec2 directionVec){
-        float steepness = std::abs(directionVec[1] / directionVec[0]);
-
-        steepness = (steepness > 2.0f)? 2.0f : steepness;
-        steepness = (steepness < 0.5f)? 0.5f : steepness;
-        this->speed = steepness;
-    }
-
-    float countAngle(float x, float y, float xDisplacement){
-        float angle = glm::atan(y / x);
-        angle += (xDisplacement > 0) ? glm::radians(-90.0f) : glm::radians(90.0f);
-        return angle;
-    }
-
-};
-
-void initGpu(unsigned int &VAO, unsigned int &VBO, unsigned int numOfVertices, unsigned int mode){
-    float tmp[numOfVertices * 6];
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * numOfVertices * 6, tmp, mode);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-    glBindVertexArray(0);
-}
-
-
-std::vector<float> pointsToVertices(std::vector<Point> v){
-
-
-    std::vector<float> vertices(v.size() * 6);
-    for(unsigned int i = 0; i < vertices.size(); i++){
-        vertices[i] = v[i].x;
-        vertices[i] = v[i].y;
-        vertices[i] = 0.0f;
-        vertices[i] = 1.0f;
-        vertices[i] = 1.0f;
-        vertices[i] = 1.0f;
-
-    }
-    return vertices;
-}
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+
+// settings
 const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 800;
-bool grabbing = false;
+const unsigned int SCR_HEIGHT = 600;
+bool forward, backward, left, right = false;
+bool shoot = false;
+// camera
+//Camera camera(glm::vec3(1.3f, 1.1f, 1.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 0.0f));
 
-std::vector<Point> points;
-unsigned int VBOctrlpoints, VAOctrlpoints, VBOmap, VAOmap, VBOsnail, VAOsnail;
-unsigned int addedPoints = 0;
-Snail snail;
+bool firstMouse = true; // csak lekezeljuk az eslo eger mozgatast
+float lastX =  800.0f / 2.0;  // kezdeti eger pozicio
+float lastY =  600.0 / 2.0;   // kezdeti eger pozicio
 
-float r = 0, g = 0, b = 0, speed = 0.1;
+// timing // kamera mozgas gyorsasagahoz
+float deltaTime = 0.0f;    // time between current frame and last frame
+float lastFrame = 0.0f;
 
-void cursorPos(Point &p, GLFWwindow* window){
-    double xpos, ypos;
-    //getting cursor position
-    glfwGetCursorPos(window, &xpos, &ypos);
-    float normalizerX = SCR_WIDTH / 2.0;
-    float normalizerY = SCR_HEIGHT / 2.0;
-    xpos = (xpos - normalizerX) / normalizerX;
-    ypos = -1 * (ypos - normalizerY) / normalizerY;
-    p.x = xpos;
-    p.y = ypos;
-    p.ctrlpoint = true;
-}
+//////////////////////////////////////////////////////
+// lighting
+// position of the light source
+glm::vec3 lightPos(1.2f, 10.0f, -3.0f);
+//////////////////////////////////////////////////////
 
-std::vector<Point> filterCtrlPoints(std::vector<Point> &v){
-    std::vector<Point> ctrlPoints;
-    for(unsigned int i = 0; i < v.size(); i++){
-        if(v[i].ctrlpoint){
-            ctrlPoints.push_back(v[i]);
-        }
-    }
-    return ctrlPoints;
-}
-
-void handleGrab(std::vector<Point> &points, GLFWwindow* window){
-    unsigned int idx = 0;
-    unsigned int prevIdx = 0;
-    unsigned int nextIdx = 0;
-    float distance = 5;
-
-    Point cursor(0, 0);
-    cursorPos(cursor, window);
-    for(unsigned int i = 0; i < points.size(); i++){
-        if(!points[i].ctrlpoint){
-            continue;
-        }
-        float distanceFromCursor = points[i].distance(cursor);
-        if(distanceFromCursor < distance){
-            distance = distanceFromCursor;
-            idx = i;
-        }
-    }
-    points[idx] = cursor;
-
-}
-
-void CatmullClark(){
-    for(unsigned int i = 0; i + 1 < points.size(); i += 2){
-        float half_x = (points[i].x + points[i + 1].x) * 0.5;
-        float half_y = (points[i].y + points[i + 1].y) * 0.5;
-        Point half(half_x, half_y);
-        points.insert(points.begin() + i + 1, half);
-    }
-    for(unsigned int i = 2; i + 1 < points.size(); i += 2){
-        points[i].x = points[i].x * 0.5 + points[i - 1].x * 0.25 + points[i + 1].x * 0.25;
-        points[i].y = points[i].y * 0.5 + points[i - 1].y * 0.25 + points[i + 1].y * 0.25;
-    }
-}
-
-
-void drawMap(){
-    std::vector<Point> ctrlPoints = filterCtrlPoints(points);
-    points = ctrlPoints;
-    for(unsigned int i = 0; i < 3; i++){
-        CatmullClark();
-    }
-    ctrlPoints = filterCtrlPoints(points);
-
-    float ctrlPointVertices2[ctrlPoints.size() * 6];
-
-    for(unsigned int i = 0; i < ctrlPoints.size(); i++){
-        ctrlPointVertices2[i * 6] = ctrlPoints[i].x;
-        ctrlPointVertices2[i * 6 + 1] = ctrlPoints[i].y;
-        ctrlPointVertices2[i * 6 + 2] = 0.0f;
-        ctrlPointVertices2[i * 6 + 3] = 0.0f;
-        ctrlPointVertices2[i * 6 + 4] = 0.5f;
-        ctrlPointVertices2[i * 6 + 5] = 0.0f;
-    }
-    glBindVertexArray(VAOctrlpoints);
-    glBindBuffer(GL_ARRAY_BUFFER, VBOctrlpoints);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(ctrlPointVertices2), &ctrlPointVertices2);
-
-    Point firstPoint = points[0];
-    firstPoint.ctrlpoint = false;
-    points.push_back(firstPoint);
-
-    float vertice[points.size() * 6];
-    for(unsigned int i = 0; i < points.size(); i++){
-        vertice[i * 6] = points[i].x;
-        vertice[i * 6 + 1] = points[i].y;
-        vertice[i * 6 + 2] = 0.0f;
-        vertice[i * 6 + 3] = 0.0f;
-        vertice[i * 6 + 4] = 0.0f;
-        vertice[i * 6 + 5] = 0.8f;
-    }
-    glBindVertexArray(VAOmap);
-    glBindBuffer(GL_ARRAY_BUFFER, VBOmap);
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertice), &vertice);
-
-}
-
-
+float a = 0;
+float d = 0;
+float s = 0;
 
 int main() {
     // glfw: initialize and configure
@@ -399,9 +66,15 @@ int main() {
         glfwTerminate();
         return -1;
     }
-
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+    glfwSetKeyCallback(window, key_callback);
+
+    // tell GLFW to capture our mouse
+    // nem latjuk a cursort es nem tudja elhagyni az ablakot
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -410,129 +83,405 @@ int main() {
         return -1;
     }
 
+    glEnable(GL_DEPTH_TEST);
+
+    //////////////////////////////////////////////////////
+    // build and compile our shader program
+    Shader lightingShader("4.0.shader.vs", "4.0.shader.fs");
+
+    // kulon shader mert ha valtoztatni akarunk a vertexeken akkor legyen fuggetlen
+    // a light es a targyak rajzolasa
+    // es nem akarjuk h a feny hatassal legyen a lampankra csak a megvilagitott targyra
+    Shader lampShader("4.0.lamp.vs", "4.0.lamp.fs");
+
+    Shader ourShader("4.0.floor.vs", "4.0.floor.fs");
+    //////////////////////////////////////////////////////
+
     // set up vertex data (and buffer(s)) and configure vertex attributes
+    /// normal vectors
+    float vertices[] = {
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+        0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+    };
+    /*
+    float floorVertices [] = {
+
+        -50, 0.0, -50, 0.0, 0.0, 0.0, 0.0f, 1.0f,
+        -50, 0.0, 50, 0.0, 0.0, 0.0, 0.0f, 0.0f,
+        50, 0.0, -50, 0.0, 0.0, 0.0, 1.0f, 1.0f,
+        50, 0.0, 50, 0.0, 0.0, 0.0, 1.0f, 0.0f,
+    };
+    */
+    float floorVertices[] = {
+        // positions          // colors           // texture coords
+         0.5f,  0.5f, 0.0f, 1.0f, 1.0f,   // top right
+         0.5f, -0.5f, 0.0f, 1.0f, 0.0f,   // bottom right
+        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,   // bottom left
+        -0.5f,  0.5f, 0.0f, 0.0f, 1.0f    // top left
+    };
+
+    float floor_indices[] = {
+        0, 1, 2,
+        1, 2, 3
+    };
+    //////////////////////////////////////////////////////
+    // first, configure the cube's VAO (and VBO)
+    unsigned int VBO, cubeVAO;
+    glGenVertexArrays(1, &cubeVAO);
+    glGenBuffers(1, &VBO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindVertexArray(cubeVAO);
+
+    // position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // normal attribute
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+    //////////////////////////////////////////////////////
+
+    //////////////////////////////////////////////////////
+    // second, configure the light's VAO (VBO stays the same; the vertices are the same for the light object which is also a 3D cube)
+    unsigned int lightVAO;
+    glGenVertexArrays(1, &lightVAO);
+    glBindVertexArray(lightVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    // note that we update the lamp's position attribute's stride to reflect the updated buffer data
+
+    ///////// IT IS 6 kell legyen a stride mert nem hasznaljuk a lampanal a normalt
+    // ez nem baj met mar ugyis a GPU n van az adat
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    unsigned int floorVAO, floorVBO, floorEBO;
+
+    glGenVertexArrays(1, &floorVAO);
+    glGenBuffers(1, &floorVBO);
+    glGenBuffers(1, &floorEBO);
+
+    glBindVertexArray(floorVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, floorVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(floorVertices), floorVertices, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, floorEBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(floor_indices), floor_indices, GL_STATIC_DRAW);
+
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    // color attribute
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    // load and create a texture
     // -------------------------
+    unsigned int texture1;
+    // texture 1
+    // ---------
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);    // set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load image, create texture and generate mipmaps
+    int width, height, nrChannels;
+    //stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+    // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+    std::string path2 = "texture_01.jpg";
+    unsigned char *data = stbi_load(path2.c_str(), &width, &height, &nrChannels, 0);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
 
-    initGpu(VAOmap, VBOmap, approx, GL_DYNAMIC_DRAW);
-    initGpu(VAOctrlpoints, VBOctrlpoints, 60, GL_DYNAMIC_DRAW);
-    initGpu(VAOsnail, VBOsnail, sizeof(snail.vertices) / sizeof(float) / 6, GL_STATIC_DRAW);
-    snail.loadToGpu(VAOsnail, VBOsnail);
+    ourShader.use();
+    ourShader.setInt("texture1", 0);
 
-    glPointSize(4);
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetMouseButtonCallback(window, mouse_button_callback);
-
-    Shader ourShader = Shader("4.0.shader_orai.vs", "4.0.shader_orai.fs");
-    //Shader lineShader = Shader("4.0.shader_orai_linedraw.vs", "4.0.shader_orai.fs");
-
-
+    std::vector <glm::vec3> cubePositions;
+    int lastmix = -1;
 
     // render loop
-    // -----------
-    glLineWidth(3);
-    glPointSize(9);
-
     while (!glfwWindowShouldClose(window)) {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-        if(grabbing){
-            handleGrab(points, window);
-            drawMap();
+
+        // per-frame time logic
+        // Kamera mozgas gyorsasagahoz
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        if(forward){
+            camera.ProcessKeyboard(FORWARD, deltaTime);
+        } else if(backward){
+            camera.ProcessKeyboard(BACKWARD, deltaTime);
+        }
+        if(left){
+            camera.ProcessKeyboard(LEFT, deltaTime);
+        } else if(right){
+            camera.ProcessKeyboard(RIGHT, deltaTime);
+        }
+        camera.Position[1] = 1.1f;
+
+        if(shoot){
+            for(unsigned int i = 0; i < cubePositions.size(); i++){
+                glm::vec3 closest = closest_point(camera.Front, camera.Position, cubePositions[i]);
+                if(closest == camera.Position){
+                    continue;
+                }
+                if(glm::distance(closest, cubePositions[i]) < 1){
+                    std::cout << "hit " << i << "\n";
+                    cubePositions.erase(cubePositions.begin() + i);
+                    break;
+                }
+            }
         }
 
-        glClearColor(0.77f, 0.76f, 0.72f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        if((int) currentFrame % 10 == 0 && int(currentFrame) != lastmix){
+            lastmix = (int) currentFrame;
+            cubePositions.clear();
+            for(unsigned int i = 0; i < 10; i++ ){
+                float xpos = rand() % 101 - 50;
+                float zpos = rand() % 101 - 50;
+                cubePositions.push_back(glm::vec3(xpos, 1.1f, zpos));
+            }
+        }
+        //////////////////////////////////////////////////////
+        // be sure to activate shader when setting uniforms/drawing objects
+        lightingShader.use();
+        lightingShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+        lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+        lightingShader.setVec3("lightPos", lightPos);
+        lightingShader.setVec3("viewPos", camera.Position);
+        //////////////////////////////////////////////////////
 
+        lightingShader.setFloat("a", a);
+        lightingShader.setFloat("d", d);
+        lightingShader.setFloat("s", s);
+
+        //////////////////////////////////////////////////////
+        // view/projection transformations
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = camera.GetViewMatrix();
+        lightingShader.setMat4("projection", projection);
+        lightingShader.setMat4("view", view);
+        //////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////
+        // render the cube
+        // kockak rajzolasa
+        glBindVertexArray(cubeVAO);
+
+        for (unsigned int i = 0; i < cubePositions.size(); i++) {
+            glm::mat4 model = glm::mat4(1.0f);
+            cubePositions[i][1] += deltaTime * 1.0f;
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * i;
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            lightingShader.setMat4("model", model);
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
+
+        {
+
+            glm::mat4 model = glm::mat4(1.0f);
+
+            glm::vec3 trans = camera.Position + camera.Front;
+            model = glm::translate(model, trans);
+            float dot = glm::dot(glm::normalize(camera.Front), glm::vec3(1.0f, 0.0f, 0.0f));
+            float angle = glm::acos(dot);
+            if(camera.Front[2] > 0){
+                angle = glm::radians(360.0f) - angle;
+            }
+            //std::cout << glm::degrees(angle) << " -> " << dot << "\n";
+            model = glm::rotate(model, angle, glm::vec3(0.0f, 1.0f, 0.0f));
+
+            model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f) * 0.05f);
+            lightingShader.setMat4("model", model);
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        }
+        //////////////////////////////////////////////////////
+
+        //////////////////////////////////////////////////////
+        // lampa rajzolasa
+        // world transformation
+        glm::mat4 model = glm::mat4(1.0f);
+        lightingShader.setMat4("model", model);
+
+        // also draw the lamp object
+        lampShader.use();
+        lampShader.setMat4("projection", projection);
+        lampShader.setMat4("view", view);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, lightPos);
+        model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
+        lampShader.setMat4("model", model);
+
+        glBindVertexArray(lightVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
         ourShader.use();
-        ourShader.setMat4("trans", glm::mat4(1.0f));
+        ourShader.setMat4("projection", projection);
+        ourShader.setMat4("view", view);
+        ourShader.setMat4("model", glm::mat4(1.0f));
+        glBindVertexArray(floorVAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-        glBindVertexArray(VAOmap);
-        glDrawArrays(GL_LINE_STRIP, 0, points.size());
+        //////////////////////////////////////////////////////
 
-        glBindVertexArray(VAOctrlpoints);
-        glDrawArrays(GL_POINTS, 0, addedPoints);
-
-        snail.draw(VAOsnail, VBOsnail, ourShader, points);
-
-        //glBindVertexArray(0);
-
-        //glDrawArrays(GL_LINE_STRIP, 0, points.size());
-
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    // optional: de-allocate all resources once they've outlived their purpose:
-    // ------------------------------------------------------------------------
-    glDeleteVertexArrays(1, &VAOmap);
-    glDeleteVertexArrays(1, &VAOctrlpoints);
-    glDeleteVertexArrays(1, &VAOsnail);
-    glDeleteBuffers(1, &VBOctrlpoints);
-    glDeleteBuffers(1, &VBOmap);
-    glDeleteBuffers(1, &VBOsnail);
+    glDeleteVertexArrays(1, &cubeVAO);
+    glDeleteVertexArrays(1, &lightVAO);
+    glDeleteBuffers(1, &VBO);
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
-    // ------------------------------------------------------------------
     glfwTerminate();
     return 0;
 }
 
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow *window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
-}
-
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
 
-
-
-
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    else if(glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS){
-        for(unsigned int i = 0; i < points.size(); i++){
-            std::cout << points[i]. x << ", " << points[i].y << ", " << "0.0, 0.0, 0.0, 0.0,\n";
-        }
+    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+        if(a == 0)
+            a = 1;
+        else
+            a = 0;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+        if(d == 0)
+            d = 1;
+        else
+            d = 0;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) {
+        if(s == 0)
+            s = 1;
+        else
+            s = 0;
+    }
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        forward = true;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        backward = true;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        left = true;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        right = true;
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE)
+        forward = false;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE)
+        backward = false;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE)
+        left = false;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE)
+        right = false;
+}
+
+// FPS like kamera mozgas
+// 1) Calculate the mouse's offset since the last frame.
+// 2) Add the offset values to the camera's yaw and pitch values.
+// 3) Add some constraints to the maximum/minimum pitch values
+// 4) Calculate the direction vector
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+
+    lastX = xpos;
+    lastY = ypos;
+
+    camera.ProcessMouseMovement(xoffset, yoffset);
+
+    if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS){
+        shoot = true;
+    }
+    if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE){
+        shoot = false;
     }
 }
 
-
-static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-    if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-
-
-        Point p(0, 0);
-        cursorPos(p, window);
-        float vertice[6] = {
-            p.x, p.y, 0.0f, 1.0f, 0.0f, 0.0f
-        };
-        points.push_back(p);
-        glBindVertexArray(VAOctrlpoints);
-        glBindBuffer(GL_ARRAY_BUFFER, VBOctrlpoints);
-        glBufferSubData(GL_ARRAY_BUFFER, 6*sizeof(float)*addedPoints, sizeof(vertice), &vertice);
-
-        std::cout << addedPoints << ".: " <<"Cursor Position at " << p.x << " : " << p.y << "\n";
-        addedPoints++;
-        drawMap();
-
-    }
-    else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS){
-        grabbing = true;
-    }
-    else if(button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_RELEASE){
-        grabbing = false;
-    }
-
+// zooming
+// amikor a fov kisebb lesz akkor a projektalt space is kisebb lesz ami olyan hatast kelt mintha zoom olnank
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    camera.ProcessMouseScroll(yoffset);
 }
